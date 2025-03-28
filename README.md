@@ -1,18 +1,25 @@
-## H-Dj Songs Mixer 🎧
+# 🎚️ H-DJ - Automate Song Mixer
 
-**H-DJ** is a fun, interactive DJ tool that lets you perform smooth crossfades between `.mp3` tracks in a folder using a single key press or on song end — with a vibrant retro UI inspired by cassette tapes and old-school mixers.
+**H-DJ** is a drag-and-drop DJ application that lets you smoothly transition between tracks with beat-aware crossfades and automatic BPM analysis.
 
-## Features
-- 🎵 Loads all `.mp3` files from a folder
-- ⏳ Press `SPACE` to manually fade out the current track and fade in the next with a 15-second crossfade
-- 🥁 Basic BPM mapping support for beat-synced transitions
-- 🕒 Auto-transition when a track ends
+---
 
-## Requirements
-- Python 3.x
-- Pygame
+## 🚀 Features
 
-Install dependencies with:
+- 🎵 Load `.mp3` tracks by simply dragging a folder into the app
+- 🧠 Optional **automatic BPM detection**
+- 🎚️ 15-second **crossfade transitions**
+- ⏱️ Automatically sorts songs by BPM (low to high) for better energy flow
+- 👆 Clickable **Next Track** button or use `SPACE` to transition
+- 🎧 UI with real-time loading status
+
+---
+
+## 🖥️ Requirements
+
+- Python 3.8+
+- Install dependencies:
 
 ```bash
 pip install -r requirements.txt
+

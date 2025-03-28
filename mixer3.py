@@ -3,25 +3,23 @@ import pygame
 from pygame.locals import *
 import time
 import sys
+import librosa
+import soundfile as sf
 
 # Config
-FADE_DURATION = 15000  # milliseconds
-MANUAL_BPM = {
-    "song1.mp3": 128,
-    "song2.mp3": 124,
-    "song3.mp3": 130
-}
+FADE_DURATION = 15000
+DEFAULT_BPM = 120
 
 # Init
 pygame.init()
 pygame.mixer.init(frequency=44100, size=-16, channels=2)
 screen = pygame.display.set_mode((800, 800))
-pygame.display.set_caption("H-Dj - Mixer")
-#pygame.display.set_allow_drop(True)
+pygame.display.set_caption("H-Dj Cassette Edition 🎚️")
+pause_for_bpm_choice = True
 font = pygame.font.SysFont(None, 32)
 clock = pygame.time.Clock()
+popup_font = pygame.font.SysFont("comicsansms", 28)
 
-# Load background
 background_img = pygame.image.load("vinyl.png").convert()
 background_img = pygame.transform.scale(background_img, screen.get_size())
 overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
@@ -34,56 +32,118 @@ current_song_idx = 0
 last_fade_start = 0
 music_folder = None
 loading_messages = []
+bpm_analysis_enabled = False
+
 
 def get_beat_interval(bpm):
     return (60 / bpm) * 1000
 
+
 def show_drag_in_message():
     screen.blit(background_img, (0, 0))
     screen.blit(overlay, (0, 0))
-    title = font.render("<> Drop your music folder here", True, (255, 255, 255))
+    title = font.render("🎧 Drop your music folder here", True, (255, 255, 255))
     screen.blit(title, (180, 370))
     pygame.display.flip()
+
+
+def ask_bpm_analysis():
+    global bpm_analysis_enabled
+    screen.blit(background_img, (0, 0))
+    screen.blit(overlay, (0, 0))
+    msg = popup_font.render("Analyze BPM automatically? (Y/N)", True, (255, 255, 255))
+    screen.blit(msg, (140, 370))
+    pygame.display.flip()
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == KEYDOWN:
+                if event.unicode.lower() == 'y':
+                    bpm_analysis_enabled = True
+                    waiting = False
+                elif event.unicode.lower() == 'n':
+                    bpm_analysis_enabled = False
+                    waiting = False
+
+    screen.blit(background_img, (0, 0))
+    screen.blit(overlay, (0, 0))
+    pygame.display.flip()
+
 
 def show_loading_screen(messages):
     screen.blit(background_img, (0, 0))
     screen.blit(overlay, (0, 0))
-    title = font.render(" Drink your coffee/drink, the songs are loading...", True, (255, 255, 255))
+    title = font.render("🎧 Loading Songs...", True, (255, 255, 255))
     screen.blit(title, (30, 30))
     for i, msg in enumerate(messages[-15:]):
         line = font.render(msg, True, (180, 220, 255))
         screen.blit(line, (50, 80 + i * 30))
     pygame.display.flip()
 
+
+def detect_bpm(path):
+    try:
+        y, sr = librosa.load(path, sr=None, mono=True, duration=120.0)
+        onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+        tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr)
+        if len(tempo) > 0:
+            return round(tempo[0])
+        else:
+            return DEFAULT_BPM
+    except Exception as e:
+        return DEFAULT_BPM
+
+
 def load_music_folder(folder_path):
     global songs, loading_messages
     songs = []
     loading_messages = []
+
     for file in sorted(os.listdir(folder_path)):
         if file.lower().endswith(".mp3"):
             full_path = os.path.join(folder_path, file)
             try:
+                loading_messages.append(f"🔎 Analyzing: {file}")
+                show_loading_screen(loading_messages)
+                pygame.event.pump()
+                pygame.display.flip()
+
                 sound = pygame.mixer.Sound(full_path)
-                bpm = MANUAL_BPM.get(file, 120)
+                bpm = DEFAULT_BPM
+                if bpm_analysis_enabled:
+                    bpm = detect_bpm(full_path)
+
                 songs.append({
                     'file': file,
                     'sound': sound,
                     'bpm': bpm
                 })
-                msg = f":) Loaded: {file} (BPM: {bpm})"
-                loading_messages.append(msg)
+
+                loading_messages.append(f"✅ {file} (BPM: {bpm})")
                 show_loading_screen(loading_messages)
+                pygame.event.pump()
+                pygame.display.flip()
                 time.sleep(0.2)
+
             except Exception as e:
-                msg = f"❌ Error loading {file}: {str(e)}"
+                msg = f"❌ {file}: {str(e)}"
                 loading_messages.append(msg)
                 show_loading_screen(loading_messages)
+                pygame.event.pump()
+                pygame.display.flip()
                 time.sleep(0.5)
 
-# App flow
-state = "waiting"  # states: waiting, loading, playing
+    # Sort songs by BPM ascending after loading
+    songs.sort(key=lambda s: s['bpm'])
 
+
+state = "waiting"
 running = True
+
 while running:
     now = pygame.time.get_ticks()
 
@@ -98,6 +158,7 @@ while running:
             dropped_path = event.file
             if os.path.isdir(dropped_path):
                 music_folder = dropped_path
+                ask_bpm_analysis()
                 state = "loading"
                 load_music_folder(music_folder)
                 if songs:
@@ -123,7 +184,6 @@ while running:
                 channels[next_channel].set_volume(0.0)
                 last_fade_start = now
 
-    # Fade Logic
     if state == "playing" and last_fade_start > 0:
         elapsed = now - last_fade_start
         if elapsed <= FADE_DURATION:
@@ -136,45 +196,30 @@ while running:
             current_song_idx = (current_song_idx + 1) % len(songs)
             last_fade_start = 0
 
-    # UI Drawing
     if state == "playing":
         screen.blit(background_img, (0, 0))
         screen.blit(overlay, (0, 0))
 
-        # 🎛️ Title
         title_font = pygame.font.SysFont("comicsansms", 42)
-        title_shadow = title_font.render(" H-DJ Mixer", True, (0, 0, 0))
-        title_text = title_font.render("H-DJ Mixer", True, (255, 200, 50))
-        screen.blit(title_shadow, (52, 22))
+        title_text = title_font.render("H-DJ Cassette Edition", True, (255, 200, 50))
         screen.blit(title_text, (50, 20))
 
-        # Now Playing
         song_font = pygame.font.SysFont("arialblack", 28)
-        label_shadow = song_font.render("Now Playing ----:", True, (0, 0, 0))
-        label_text = song_font.render("Now Playing ---- :", True, (255, 255, 0))
-        screen.blit(label_shadow, (60 + 2, 100 + 2))
+        label_text = song_font.render("Now Playing:", True, (255, 255, 0))
         screen.blit(label_text, (60, 100))
 
         current_song = songs[current_song_idx]['file']
         current_text = font.render(current_song, True, (255, 255, 255))
-        current_shadow = font.render(current_song, True, (0, 0, 0))
-        screen.blit(current_shadow, (60 + 2, 140 + 2))
         screen.blit(current_text, (60, 140))
 
-        # Up Next
         next_idx = (current_song_idx + 1) % len(songs)
         next_song = songs[next_idx]['file']
-        next_label = song_font.render("Up Next ****:", True, (100, 255, 255))
-        next_shadow = song_font.render("Up Next ****:", True, (0, 0, 0))
-        screen.blit(next_shadow, (60 + 2, 190 + 2))
+        next_label = song_font.render("Up Next:", True, (100, 255, 255))
         screen.blit(next_label, (60, 190))
 
         next_text = font.render(next_song, True, (255, 255, 255))
-        next_shadow = font.render(next_song, True, (0, 0, 0))
-        screen.blit(next_shadow, (60 + 2, 230 + 2))
         screen.blit(next_text, (60, 230))
 
-        # Progress bar
         bar_x, bar_y, bar_w, bar_h = 60, 300, 680, 30
         pygame.draw.rect(screen, (255, 255, 255), (bar_x, bar_y, bar_w, bar_h), 3, border_radius=15)
 
@@ -184,14 +229,13 @@ while running:
             pygame.draw.rect(screen, (255, 100, 200), (bar_x, bar_y, fill_width, bar_h), border_radius=15)
             pygame.draw.rect(screen, (255, 180, 255), (bar_x, bar_y, fill_width, bar_h), 2, border_radius=15)
 
-        # Next Button
         next_button_rect = pygame.Rect(600, 700, 160, 50)
         mouse_hover = next_button_rect.collidepoint(pygame.mouse.get_pos())
         button_color = (255, 80, 120) if mouse_hover else (255, 50, 100)
         pygame.draw.rect(screen, button_color, next_button_rect, border_radius=20)
         pygame.draw.rect(screen, (255, 255, 255), next_button_rect, 3, border_radius=20)
 
-        next_button_text = font.render("> Next Track", True, (255, 255, 255))
+        next_button_text = font.render("▶ Next Track", True, (255, 255, 255))
         screen.blit(next_button_text, (next_button_rect.x + 15, next_button_rect.y + 12))
 
         pygame.display.flip()
