@@ -1,4 +1,4 @@
-# 🎚️ H-DJ - Automate Song Mixer
+# H-DJ - Automate Song Mixer
 
 **H-DJ** is a drag-and-drop DJ application that lets you smoothly transition between tracks with beat-aware crossfades and automatic BPM analysis.
 
