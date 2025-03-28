@@ -1,4 +1,4 @@
-## H-Dj 🎧
+## H-Dj Songs Mixer 🎧
 
 **H-DJ** is a fun, interactive DJ tool that lets you perform smooth crossfades between `.mp3` tracks in a folder using a single key press or on song end — with a vibrant retro UI inspired by cassette tapes and old-school mixers.
 
