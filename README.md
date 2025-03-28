@@ -1,6 +1,6 @@
 ## H-Dj 🎧
 
-A simple Python application that lets you mix songs from a folder using smooth DJ-style transitions.
+**H-DJ** is a fun, interactive DJ tool that lets you perform smooth crossfades between `.mp3` tracks in a folder using a single key press or on song end — with a vibrant retro UI inspired by cassette tapes and old-school mixers.
 
 ## Features
 - 🎵 Loads all `.mp3` files from a folder
