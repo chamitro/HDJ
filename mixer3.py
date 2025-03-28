@@ -14,13 +14,13 @@ DEFAULT_BPM = 120
 pygame.init()
 pygame.mixer.init(frequency=44100, size=-16, channels=2)
 screen = pygame.display.set_mode((800, 800))
-pygame.display.set_caption("H-Dj Cassette Edition 🎚️")
+pygame.display.set_caption("H-Dj Mixer")
 pause_for_bpm_choice = True
 font = pygame.font.SysFont(None, 32)
 clock = pygame.time.Clock()
 popup_font = pygame.font.SysFont("comicsansms", 28)
 
-background_img = pygame.image.load("vinyl.png").convert()
+background_img = pygame.image.load("vinyl.jpg").convert()
 background_img = pygame.transform.scale(background_img, screen.get_size())
 overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 overlay.fill((0, 0, 0, 120))
@@ -42,7 +42,7 @@ def get_beat_interval(bpm):
 def show_drag_in_message():
     screen.blit(background_img, (0, 0))
     screen.blit(overlay, (0, 0))
-    title = font.render("🎧 Drop your music folder here", True, (255, 255, 255))
+    title = font.render("---> Drop your music folder here", True, (255, 255, 255))
     screen.blit(title, (180, 370))
     pygame.display.flip()
 
@@ -77,7 +77,7 @@ def ask_bpm_analysis():
 def show_loading_screen(messages):
     screen.blit(background_img, (0, 0))
     screen.blit(overlay, (0, 0))
-    title = font.render("🎧 Loading Songs...", True, (255, 255, 255))
+    title = font.render("<...> Loading Songs...", True, (255, 255, 255))
     screen.blit(title, (30, 30))
     for i, msg in enumerate(messages[-15:]):
         line = font.render(msg, True, (180, 220, 255))
@@ -107,7 +107,7 @@ def load_music_folder(folder_path):
         if file.lower().endswith(".mp3"):
             full_path = os.path.join(folder_path, file)
             try:
-                loading_messages.append(f"🔎 Analyzing: {file}")
+                loading_messages.append(f"~ Analyzing: {file}")
                 show_loading_screen(loading_messages)
                 pygame.event.pump()
                 pygame.display.flip()
@@ -201,7 +201,7 @@ while running:
         screen.blit(overlay, (0, 0))
 
         title_font = pygame.font.SysFont("comicsansms", 42)
-        title_text = title_font.render("H-DJ Cassette Edition", True, (255, 200, 50))
+        title_text = title_font.render("H-DJ Mixer", True, (255, 200, 50))
         screen.blit(title_text, (50, 20))
 
         song_font = pygame.font.SysFont("arialblack", 28)
@@ -220,7 +220,7 @@ while running:
         next_text = font.render(next_song, True, (255, 255, 255))
         screen.blit(next_text, (60, 230))
 
-        bar_x, bar_y, bar_w, bar_h = 60, 300, 680, 30
+        bar_x, bar_y, bar_w, bar_h = 60, 640, 680, 30
         pygame.draw.rect(screen, (255, 255, 255), (bar_x, bar_y, bar_w, bar_h), 3, border_radius=15)
 
         if last_fade_start > 0:
@@ -235,7 +235,7 @@ while running:
         pygame.draw.rect(screen, button_color, next_button_rect, border_radius=20)
         pygame.draw.rect(screen, (255, 255, 255), next_button_rect, 3, border_radius=20)
 
-        next_button_text = font.render("▶ Next Track", True, (255, 255, 255))
+        next_button_text = font.render("> Next Track", True, (255, 255, 255))
         screen.blit(next_button_text, (next_button_rect.x + 15, next_button_rect.y + 12))
 
         pygame.display.flip()
