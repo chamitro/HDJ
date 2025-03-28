@@ -1,4 +1,4 @@
-# HDJ# H-Dj 🎧
+## H-Dj 🎧
 
 A simple Python application that lets you mix songs from a folder using smooth DJ-style transitions.
 
