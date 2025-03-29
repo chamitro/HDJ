@@ -1,3 +1,4 @@
 pygame
 librosa
 soundfile
+numpy
