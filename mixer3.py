@@ -55,19 +55,29 @@ def extract_waveform(path):
     except:
         return []
 
-def draw_waveform(data, y_base, height, color):
+def draw_waveform(data, y_base, height, color, play_position=None):
     if len(data) == 0:
         return
+
     bar_width = screen.get_width() // len(data)
     for i, sample in enumerate(data):
         x = i * bar_width
         h = int(sample * height)
         pygame.draw.line(screen, color, (x, y_base), (x, y_base - h), 1)
         pygame.draw.line(screen, (255, 255, 255, 40), (x, y_base), (x, y_base + h // 4), 1)
+
+    # Draw center line
     pygame.draw.line(screen, (255, 255, 255), (0, y_base), (screen.get_width(), y_base), 1)
 
+    # Draw playhead if position is given
+    if play_position is not None:
+        idx = int(play_position * len(data))
+        x_pos = min(idx * bar_width, screen.get_width() - 1)
+        pygame.draw.line(screen, (255, 0, 0), (x_pos, y_base - height), (x_pos, y_base + height // 2), 2)
+
+
 def show_pause_button():
-    pause_button_rect = pygame.Rect(40, 700, 160, 50)  # ⬅️ Left-down corner
+    pause_button_rect = pygame.Rect(40, 700, 160, 50)
     mouse_hover = pause_button_rect.collidepoint(pygame.mouse.get_pos())
     button_color = (80, 80, 255) if mouse_hover else (50, 50, 200)
     pygame.draw.rect(screen, button_color, pause_button_rect, border_radius=20)
@@ -267,7 +277,15 @@ while running:
 
         # Waveform
         current_waveform = songs[current_song_idx].get('waveform', [])
-        draw_waveform(current_waveform, y_base=520, height=40, color=(0, 255, 200))
+        # Calculate play position for waveform (0.0 - 1.0)
+        if songs[current_song_idx]['sound'].get_length() >= 0:
+            track_length = songs[current_song_idx]['sound'].get_length() * 1000
+            elapsed = pygame.time.get_ticks() - track_start_time
+            play_position = min(elapsed / track_length, 1.0)
+        else:
+            play_position = 0.0
+
+        draw_waveform(current_waveform, y_base=520, height=40, color=(0, 255, 200), play_position=play_position)
 
         # Pause Button (bottom left)
         pause_button_rect = pygame.Rect(40, 700, 160, 50)
